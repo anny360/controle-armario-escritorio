@@ -3,62 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque - Armário</title>
-    <script src="https://jsdelivr.net"></script>
+    <title>Controle de Estoque - Kenvue</title>
+    <style>
+        /* Paleta Kenvue baseada em tons de Turquesa/Teal corporativo */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f0f7f7;
+            color: #112222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        /* Topo com o Logo da Marca */
+        .brand-header {
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            margin-bottom: 8px;
+            margin-top: 10px;
+        }
+        .brand-logo {
+            max-width: 140px;
+            height: auto;
+        }
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 75, 75, 0.08);
+            padding: 24px;
+            margin-top: 12px;
+            border-top: 4px solid #005a5b; /* Detalhe em turquesa escuro */
+        }
+        h1 {
+            font-size: 20px;
+            color: #004b4c;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        h2 {
+            font-size: 16px;
+            color: #005a5b;
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c4a4a;
+            margin-bottom: 6px;
+        }
+        /* Elementos de Entrada */
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #b2cfcf;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            background-color: #fbfdfd;
+            transition: all 0.2s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: #007a7c;
+            box-shadow: 0 0 0 3px rgba(0, 122, 124, 0.15);
+            background-color: #ffffff;
+        }
+        /* Caixa de Resultados da Busca */
+        .product-list {
+            margin-top: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #b2cfcf;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .product-item {
+            width: 100%;
+            text-align: left;
+            padding: 14px 16px;
+            background: none;
+            border: none;
+            border-bottom: 1px solid #e5f2f2;
+            font-size: 15px;
+            color: #1f3838;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        .product-item:hover {
+            background-color: #e6f2f2;
+            color: #004b4c;
+            font-weight: 500;
+        }
+        /* Seção do Formulário Ativo */
+        .form-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5f2f2;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #004b4c;
+            margin-bottom: 4px;
+        }
+        .stock-info {
+            font-size: 14px;
+            color: #557171;
+            margin-bottom: 16px;
+        }
+        .stock-count {
+            font-weight: 700;
+            color: #007a7c;
+        }
+        /* Botão Principal */
+        button.btn-primary {
+            width: 100%;
+            background-color: #007a7c; /* Turquesa da marca */
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 122, 124, 0.2);
+        }
+        button.btn-primary:hover {
+            background-color: #005a5b;
+        }
+        /* Alertas */
+        .alert-success {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: #d1f2f2;
+            color: #004b4c;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 15px;
+            border: 1px solid #a3e5e5;
+        }
+        .hidden {
+            display: none !important;
+        }
+        /* Tabela Inferior de Estoque */
+        .stock-table {
+            margin-top: 4px;
+        }
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5f2f2;
+            font-size: 14px;
+            color: #2c4a4a;
+        }
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        .badge-low {
+            color: #c92a2a;
+            font-weight: 700;
+            background-color: #ffe3e3;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .badge-normal {
+            color: #005a5b;
+            font-weight: 700;
+            background-color: #e6f2f2;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center p-4">
+<body>
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 mt-4">
-        <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">📦 Retirada de Material</h1>
+    <!-- Logo Kenvue Centrado no Topo -->
+    <div class="brand-header">
+        <img src="https://wikimedia.org" alt="Kenvue Logo" class="brand-logo">
+    </div>
+
+    <!-- Bloco Principal de Movimentação -->
+    <div class="container">
+        <h1>SISTEMA DE ESTOQUE</h1>
         
-        <!-- Barra de Pesquisa -->
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Pesquisar Produto</label>
-            <input type="text" id="searchBar" oninput="filterProducts()" placeholder="Digite o nome do material..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg">
+        <!-- Campo de Pesquisa -->
+        <div style="margin-bottom: 12px;">
+            <label for="searchBar">Localizar Material</label>
+            <input type="text" id="searchBar" oninput="filterProducts()" placeholder="Digite para buscar...">
+            <div id="productList" class="product-list hidden"></div>
         </div>
 
-        <!-- Lista de Resultados -->
-        <div id="productList" class="space-y-3 max-h-60 overflow-y-auto mb-6 hidden">
-            <!-- Inserido dinamicamente via JS -->
-        </div>
-
-        <!-- Formulário de Retirada -->
-        <div id="withdrawalForm" class="hidden border-t border-gray-200 pt-4">
-            <h3 id="selectedProductName" class="text-xl font-semibold text-gray-800 mb-2"></h3>
-            <p class="text-sm text-gray-500 mb-4">Estoque atual: <span id="currentStock" class="font-bold text-gray-700">0</span> unidades</p>
+        <!-- Painel de Confirmação de Retirada -->
+        <div id="withdrawalForm" class="hidden form-section">
+            <h3 id="selectedProductName" class="product-title"></h3>
+            <p class="stock-info">Disponível no armário: <span id="currentStock" class="stock-count">0</span> un</p>
             
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade Retirada</label>
-                <input type="number" id="quantityInput" min="1" value="1" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg text-center font-bold">
+            <div style="margin-bottom: 16px;">
+                <label for="quantityInput">Quantidade Retirada</label>
+                <input type="number" id="quantityInput" min="1" value="1" style="text-align: center; font-size: 20px; font-weight: bold; color: #004b4c;">
             </div>
 
-            <button onclick="confirmWithdrawal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 text-lg shadow-md">
-                Confirmar Retirada
-            </button>
+            <button onclick="confirmWithdrawal()" class="btn-primary">Registrar Retirada</button>
         </div>
 
         <!-- Feedback de Sucesso -->
-        <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 text-green-800 rounded-xl text-center font-medium">
-            Estoque atualizado com sucesso!
+        <div id="successMessage" class="alert-success hidden">
+            ✓ Estoque atualizado no sistema!
         </div>
     </div>
 
-    <!-- Visualizador de Estoque Geral -->
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-md p-6 mt-6">
-        <h2 class="text-lg font-bold text-gray-700 mb-4">📋 Estoque Atual do Armário</h2>
-        <div id="stockTable" class="divide-y divide-gray-200">
-            <!-- Preenchido via JS -->
-        </div>
+    <!-- Painel de Consulta do Almoxarifado -->
+    <div class="container" style="border-top-color: #007a7c;">
+        <h2>📋 Itens Cadastrados</h2>
+        <div id="stockTable" class="stock-table"></div>
     </div>
 
     <script>
-        // Banco de dados simulado (caso não exista no LocalStorage)
+        // ==========================================
+        // PRODUTOS E QUANTIDADES (PERSONALIZE AQUI)
+        // Altere os nomes e estoques padrão conforme sua necessidade
+        // ==========================================
         let initialProducts = [
-            { id: 1, name: "Caneta Azul", stock: 50 },
-            { id: 2, name: "Caderno Moleskine", stock: 15 },
-            { id: 3, name: "Grampeador", stock: 5 },
-            { id: 4, name: "Resma de Papel A4", stock: 20 },
-            { id: 5, name: "Fita Adesiva", stock: 12 }
+            { id: 1, name: "Álcool em Gel Antisséptico", stock: 24 },
+            { id: 2, name: "Luvas de Procedimento (M)", stock: 15 },
+            { id: 3, name: "Curativo Band-Aid Caixa c/ 30", stock: 40 },
+            { id: 4, name: "Listerine Mentol 500ml", stock: 12 },
+            { id: 5, name: "Sabonete Líquido Johnson's", stock: 18 },
+            { id: 6, name: "Protetor Solar Neutrogena FPS 50", stock: 8 },
+            { id: 7, name: "Papel Toalha Interfolha (Pacote)", stock: 5 }
         ];
 
         if (!localStorage.getItem('inventory')) {
@@ -72,10 +267,11 @@
             const table = document.getElementById('stockTable');
             table.innerHTML = '';
             products.forEach(p => {
+                const stockClass = p.stock <= 5 ? 'badge-low' : 'badge-normal';
                 table.innerHTML += `
-                    <div class="flex justify-between py-2 text-sm text-gray-600">
+                    <div class="table-row">
                         <span>${p.name}</span>
-                        <span class="font-bold ${p.stock < 10 ? 'text-red-500' : 'text-gray-800'}">${p.stock} un</span>
+                        <span class="${stockClass}">${p.stock} un</span>
                     </div>
                 `;
             });
@@ -97,64 +293,8 @@
                 listDiv.classList.remove('hidden');
                 filtered.forEach(p => {
                     listDiv.innerHTML += `
-                        <button onclick="selectProduct(${p.id})" class="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition text-gray-700 font-medium block">
-                            ${p.name} (${p.stock} disponíveis)
+                        <button onclick="selectProduct(${p.id})" class="product-item">
+                            ${p.name} (${p.stock} un)
                         </button>
                     `;
                 });
-            } else {
-                listDiv.innerHTML = `<p class="text-sm text-gray-400 p-2 text-center">Nenhum produto encontrado.</p>`;
-                listDiv.classList.remove('hidden');
-            }
-        }
-
-        function selectProduct(id) {
-            selectedProduct = products.find(p => p.id === id);
-            document.getElementById('productList').classList.add('hidden');
-            document.getElementById('searchBar').value = selectedProduct.name;
-            
-            document.getElementById('selectedProductName').innerText = selectedProduct.name;
-            document.getElementById('currentStock').innerText = selectedProduct.stock;
-            document.getElementById('quantityInput').max = selectedProduct.stock;
-            document.getElementById('quantityInput').value = 1;
-            
-            document.getElementById('withdrawalForm').classList.remove('hidden');
-        }
-
-        function confirmWithdrawal() {
-            const qtyInput = document.getElementById('quantityInput');
-            const qtyToRemove = parseInt(qtyInput.value);
-
-            if (isNaN(qtyToRemove) || qtyToRemove <= 0) {
-                alert("Insira uma quantidade válida.");
-                return;
-            }
-
-            if (qtyToRemove > selectedProduct.stock) {
-                alert("Quantidade indisponível no estoque!");
-                return;
-            }
-
-            // Atualiza o estoque
-            selectedProduct.stock -= qtyToRemove;
-            localStorage.setItem('inventory', JSON.stringify(products));
-
-            // Feedback visual
-            document.getElementById('withdrawalForm').classList.add('hidden');
-            document.getElementById('searchBar').value = '';
-            
-            const msg = document.getElementById('successMessage');
-            msg.classList.remove('hidden');
-            
-            renderStockTable();
-
-            setTimeout(() => {
-                msg.classList.add('hidden');
-            }, 3000);
-        }
-
-        // Inicializa a tabela ao carregar a página
-        renderStockTable();
-    </script>
-</body>
-</html>
