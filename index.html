@@ -118,19 +118,33 @@
             color: #557171;
             margin-bottom: 16px;
         }
-        button.btn-primary {
-            width: 100%;
-            background-color: #007a7c;
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+        }
+        button.btn-action {
+            flex: 1;
             color: white;
             border: none;
             padding: 14px;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s;
         }
-        button.btn-primary:hover {
-            background-color: #005a5b;
+        button.btn-add {
+            background-color: #2b8a3e;
+        }
+        button.btn-add:hover {
+            background-color: #237032;
+        }
+        button.btn-remove {
+            background-color: #c92a2a;
+        }
+        button.btn-remove:hover {
+            background-color: #a62323;
         }
         .alert-success {
             margin-top: 16px;
@@ -167,46 +181,6 @@
             border-radius: 6px;
         }
     </style>
-</head>
-<body>
-
-    <!-- Logo Kenvue Identidade Visual -->
-    <div class="brand-header">
-        <div class="brand-logo">kenvue</div>
-    </div>
-
-    <!-- Container de Ação -->
-    <div class="container">
-        <h1>SISTEMA DE ESTOQUE</h1>
-        
-        <div style="margin-bottom: 12px;">
-            <label for="searchBar">Localizar Material</label>
-            <input type="text" id="searchBar" oninput="filterProducts()" placeholder="Digite para buscar...">
-            <div id="productList" class="product-list hidden"></div>
-        </div>
-
-        <div id="withdrawalForm" class="hidden form-section">
-            <h3 id="selectedProductName" class="product-title"></h3>
-            <p class="stock-info">Disponível no armário: <span id="currentStock" style="font-weight:700; color:#007a7c;">0</span> un</p>
-            
-            <div style="margin-bottom: 16px;">
-                <label for="quantityInput">Quantidade Retirada</label>
-                <input type="number" id="quantityInput" min="1" value="1" style="text-align: center; font-size: 20px; font-weight: bold; color: #004b4c;">
-            </div>
-            
-            <button onclick="confirmWithdrawal()" class="btn-primary">Registrar Retirada</button>
-        </div>
-
-        <div id="successMessage" class="alert-success hidden">
-            ✓ Estoque atualizado no sistema!
-        </div>
-    </div>
-
-    <!-- Container da Tabela -->
-    <div class="container" style="border-top-color: #007a7c;">
-        <h2>📋 Itens Cadastrados</h2>
-        <div id="stockTable"></div>
-    </div>
 
     <script>
         let initialProducts = [
@@ -219,17 +193,17 @@
             { id: 7, name: "Papel Toalha Interfolha (Pacote)", stock: 5 }
         ];
 
-        // Garante a inicialização correta no banco local
-        if (!localStorage.getItem('inventory_v2')) {
-            localStorage.setItem('inventory_v2', JSON.stringify(initialProducts));
+        // Novo banco de dados v4 limpa qualquer erro anterior automaticamente
+        if (!localStorage.getItem('inventory_v4')) {
+            localStorage.setItem('inventory_v4', JSON.stringify(initialProducts));
         }
 
-        let products = JSON.parse(localStorage.getItem('inventory_v2'));
+        let products = JSON.parse(localStorage.getItem('inventory_v4'));
         let selectedProduct = null;
 
-        // Renderiza a tabela de materiais cadastrados
         function renderStockTable() {
             const table = document.getElementById('stockTable');
+            if (!table) return;
             table.innerHTML = '';
             
             products.forEach(p => {
@@ -243,7 +217,6 @@
             });
         }
 
-        // Filtra os produtos na barra de pesquisa
         function filterProducts() {
             const query = document.getElementById('searchBar').value.toLowerCase();
             const listDiv = document.getElementById('productList');
@@ -271,22 +244,61 @@
             }
         }
 
-        // Seleciona o item pesquisado e abre o formulário
         function selectProduct(id) {
             selectedProduct = products.find(p => p.id === id);
             document.getElementById('productList').classList.add('hidden');
             document.getElementById('searchBar').value = selectedProduct.name;
             document.getElementById('selectedProductName').innerText = selectedProduct.name;
             document.getElementById('currentStock').innerText = selectedProduct.stock;
-            document.getElementById('quantityInput').max = selectedProduct.stock;
             document.getElementById('quantityInput').value = 1;
             document.getElementById('withdrawalForm').classList.remove('hidden');
         }
 
-        // Confirma e processa a retirada do material
-        function confirmWithdrawal() {
+        function handleStockChange(actionType) {
             const qtyInput = document.getElementById('quantityInput');
-            const qtyToRemove = parseInt(qtyInput.value);
+            const qtyValue = parseInt(qtyInput.value);
 
-            if (isNaN(qtyToRemove) || qtyToRemove <= 0) {
-                alert("Insira um número válido para retirada.");
+            if (isNaN(qtyValue) || qtyValue <= 0) {
+                alert("Insira uma quantidade válida maior que zero.");
+                return;
+            }
+
+            if (actionType === 'remove') {
+                if (qtyValue > selectedProduct.stock) {
+                    alert("Quantidade de saída maior do que o saldo disponível no armário!");
+                    return;
+                }
+                selectedProduct.stock -= qtyValue;
+            } else if (actionType === 'add') {
+                selectedProduct.stock += qtyValue;
+            }
+
+            localStorage.setItem('inventory_v4', JSON.stringify(products));
+            renderStockTable();
+            
+            const successMsg = document.getElementById('successMessage');
+            successMsg.classList.remove('hidden');
+            document.getElementById('withdrawalForm').classList.add('hidden');
+            document.getElementById('searchBar').value = '';
+
+            setTimeout(() => {
+                successMsg.classList.add('hidden');
+            }, 2500);
+        }
+
+        document.addEventListener("DOMContentLoaded", renderStockTable);
+    </script>
+</head>
+<body>
+
+    <div class="brand-header">
+        <div class="brand-logo">kenvue</div>
+    </div>
+
+    <!-- Painel de Movimentação -->
+    <div class="container">
+        <h1>SISTEMA DE ESTOQUE</h1>
+        
+        <div style="margin-bottom: 12px;">
+            <label for="searchBar">Localizar Material</label>
+            <input type="text" id="searchBar" oninput="filterProducts()" placeholder="Digite para buscar...">
