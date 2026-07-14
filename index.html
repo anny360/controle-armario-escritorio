@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Estoque - Armário</title>
+    <script src="https://jsdelivr.net"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 mt-4">
+        <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">📦 Retirada de Material</h1>
+        
+        <!-- Barra de Pesquisa -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pesquisar Produto</label>
+            <input type="text" id="searchBar" oninput="filterProducts()" placeholder="Digite o nome do material..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg">
+        </div>
+
+        <!-- Lista de Resultados -->
+        <div id="productList" class="space-y-3 max-h-60 overflow-y-auto mb-6 hidden">
+            <!-- Inserido dinamicamente via JS -->
+        </div>
+
+        <!-- Formulário de Retirada -->
+        <div id="withdrawalForm" class="hidden border-t border-gray-200 pt-4">
+            <h3 id="selectedProductName" class="text-xl font-semibold text-gray-800 mb-2"></h3>
+            <p class="text-sm text-gray-500 mb-4">Estoque atual: <span id="currentStock" class="font-bold text-gray-700">0</span> unidades</p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade Retirada</label>
+                <input type="number" id="quantityInput" min="1" value="1" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg text-center font-bold">
+            </div>
+
+            <button onclick="confirmWithdrawal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 text-lg shadow-md">
+                Confirmar Retirada
+            </button>
+        </div>
+
+        <!-- Feedback de Sucesso -->
+        <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 text-green-800 rounded-xl text-center font-medium">
+            Estoque atualizado com sucesso!
+        </div>
+    </div>
+
+    <!-- Visualizador de Estoque Geral -->
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-md p-6 mt-6">
+        <h2 class="text-lg font-bold text-gray-700 mb-4">📋 Estoque Atual do Armário</h2>
+        <div id="stockTable" class="divide-y divide-gray-200">
+            <!-- Preenchido via JS -->
+        </div>
+    </div>
+
+    <script>
+        // Banco de dados simulado (caso não exista no LocalStorage)
+        let initialProducts = [
+            { id: 1, name: "Caneta Azul", stock: 50 },
+            { id: 2, name: "Caderno Moleskine", stock: 15 },
+            { id: 3, name: "Grampeador", stock: 5 },
+            { id: 4, name: "Resma de Papel A4", stock: 20 },
+            { id: 5, name: "Fita Adesiva", stock: 12 }
+        ];
+
+        if (!localStorage.getItem('inventory')) {
+            localStorage.setItem('inventory', JSON.stringify(initialProducts));
+        }
+
+        let products = JSON.parse(localStorage.getItem('inventory'));
+        let selectedProduct = null;
+
+        function renderStockTable() {
+            const table = document.getElementById('stockTable');
+            table.innerHTML = '';
+            products.forEach(p => {
+                table.innerHTML += `
+                    <div class="flex justify-between py-2 text-sm text-gray-600">
+                        <span>${p.name}</span>
+                        <span class="font-bold ${p.stock < 10 ? 'text-red-500' : 'text-gray-800'}">${p.stock} un</span>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const listDiv = document.getElementById('productList');
+            listDiv.innerHTML = '';
+
+            if (query.trim() === '') {
+                listDiv.classList.add('hidden');
+                return;
+            }
+
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+
+            if (filtered.length > 0) {
+                listDiv.classList.remove('hidden');
+                filtered.forEach(p => {
+                    listDiv.innerHTML += `
+                        <button onclick="selectProduct(${p.id})" class="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition text-gray-700 font-medium block">
+                            ${p.name} (${p.stock} disponíveis)
+                        </button>
+                    `;
+                });
+            } else {
+                listDiv.innerHTML = `<p class="text-sm text-gray-400 p-2 text-center">Nenhum produto encontrado.</p>`;
+                listDiv.classList.remove('hidden');
+            }
+        }
+
+        function selectProduct(id) {
+            selectedProduct = products.find(p => p.id === id);
+            document.getElementById('productList').classList.add('hidden');
+            document.getElementById('searchBar').value = selectedProduct.name;
+            
+            document.getElementById('selectedProductName').innerText = selectedProduct.name;
+            document.getElementById('currentStock').innerText = selectedProduct.stock;
+            document.getElementById('quantityInput').max = selectedProduct.stock;
+            document.getElementById('quantityInput').value = 1;
+            
+            document.getElementById('withdrawalForm').classList.remove('hidden');
+        }
+
+        function confirmWithdrawal() {
+            const qtyInput = document.getElementById('quantityInput');
+            const qtyToRemove = parseInt(qtyInput.value);
+
+            if (isNaN(qtyToRemove) || qtyToRemove <= 0) {
+                alert("Insira uma quantidade válida.");
+                return;
+            }
+
+            if (qtyToRemove > selectedProduct.stock) {
+                alert("Quantidade indisponível no estoque!");
+                return;
+            }
+
+            // Atualiza o estoque
+            selectedProduct.stock -= qtyToRemove;
+            localStorage.setItem('inventory', JSON.stringify(products));
+
+            // Feedback visual
+            document.getElementById('withdrawalForm').classList.add('hidden');
+            document.getElementById('searchBar').value = '';
+            
+            const msg = document.getElementById('successMessage');
+            msg.classList.remove('hidden');
+            
+            renderStockTable();
+
+            setTimeout(() => {
+                msg.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Inicializa a tabela ao carregar a página
+        renderStockTable();
+    </script>
+</body>
+</html>
